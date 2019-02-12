@@ -37,13 +37,13 @@ $details = $wpdb->get_row(
           </div>
         </div>
         <br>
-        <input type="text" class="form-control input-sm" placeholder="Email"><br>
-        <input type="text" class="form-control input-sm" placeholder="Phone number"><br>
-        <input type="text" class="form-control input-sm" placeholder="College"><br>
-        <input type="text" class="form-control input-sm" placeholder="Graduation year"><br>
-        <input type="text" class="form-control input-sm" placeholder="Course"><br>
-        <input type="text" class="form-control input-sm" placeholder="Linkedin URL"><br>
-        <textarea cols="30" rows="5" class="form-control input-sm" placeholder="Why do you think you are fit for this job?"></textarea><br>
+        <input type="email" class="form-control" placeholder="Email"><br>
+        <input type="tel" class="form-control" placeholder="Phone number"><br>
+        <input type="text" class="form-control" placeholder="College"><br>
+        <input type="text" class="form-control" placeholder="Graduation year"><br>
+        <input type="text" class="form-control" placeholder="Course"><br>
+        <input type="url" class="form-control" placeholder="Linkedin URL"><br>
+        <textarea cols="30" rows="5" class="form-control" placeholder="Why do you think you are fit for this job?"></textarea><br>
         <div class="form-group">
           <label for="exampleFormControlFile1">Resume</label>
           <input type="file" class="form-control-file" id="exampleFormControlFile1">
