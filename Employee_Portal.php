@@ -1,174 +1,171 @@
 <?php
 /*
-*@package EmployeePortalPlugin
+*@package EmployeePortal
 */
 /*
 Plugin Name: Employee Portal
 
-Plugin URI: http://employeeportal.com/plugin
+Plugin URI: plugin url
 
-Description: Employee Portal is a central hub of data. However, this data can have multiple sources. Like job 
-applications can come through the website, project assignments will be done in Github, payment details can be 
-retrieved from Bank’s application etc.
-This WordPress plugin allows easy integration with Employee Portal. This will help set up 
-important pieces like job listing and job forms.
+Description: This plugin helps in integrating with the Employee Portal
 
 Version: 1.0.0
 
 Author: Himanshi Chauhan
-
-Author URI: http://employeeportal.com
-
-Licence: later
-
-Text Domain: employeeportal-plugin
 */
 
 define("PLUGIN_DIR_PATH",plugin_dir_path(__FILE__));
 define("PLUGIN_URL",plugins_url());
 define("PLUGIN_VERSION","1.0");
 
-function add_my_employee_portal_menu(){
+function add_my_employee_portal_menu()
+{
     add_menu_page(
-        "employeeportal", //page title
-        "Employee Portal", //menu title
-        "manage_options", //admin level
-        "employee-portal", //page slug - parent slug
-        "add_new_function", //callback function
-        "dashicons-admin-users", //icon url
-        26 //positions
+        "employeeportal",
+        "Employee Portal",
+        "manage_options",
+        "employee-portal",
+        "about_us_function",
+        "dashicons-admin-users",
+        26
     );
 
     add_submenu_page(
-        "employee-portal", //parent slug
-        "Add New", //page title
-        "Add New", //menu title
-        "manage_options", //capability = user_level access
-        "employee-portal", //menu slug
-        "add_new_function" //callable function
+        "employee-portal",
+        "About Us",
+        "About Us",
+        "manage_options",
+        "employee-portal",
+        "about_us_function"
     );
 
     add_submenu_page(
-        "employee-portal", //parent slug
-        "Settings", //page title
-        "Settings", //menu title
-        "manage_options", //capability = user_level access
-        "settings", //menu slug
-        "settings_function" //callable function
+        "employee-portal",
+        "Settings",
+        "Settings",
+        "manage_options",
+        "settings",
+        "settings_function"
     );
 
 }
 
-add_action("admin_menu","add_my_employee_portal_menu");  //action hook
+add_action("admin_menu","add_my_employee_portal_menu");
 
-function add_new_function(){
-   include_once PLUGIN_DIR_PATH."/views/add-new.php";
+function about_us_function()
+{
+   include_once PLUGIN_DIR_PATH."/views/about-us.php";
 }
 
-function settings_function(){
-    // settings_function
+function settings_function()
+{
     include_once PLUGIN_DIR_PATH."/views/settings.php";
 }
 
-function employee_portal_assets(){
-    // css and js files
+function employee_portal_admin_assets()
+{
     wp_register_style("ep_style","https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css");
     wp_enqueue_style("ep_style");
 
-    wp_enqueue_style(
-        "epp_style", //unique name for css file
-        PLUGIN_URL."/Employee_Portal/assets/css/style.css", // css file path
-        '', // dependency on other files
-        PLUGIN_VERSION // plugin version number
-    );
-    
     wp_register_script("ep_script","https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js");
     wp_enqueue_script("ep_script");
 
     wp_enqueue_script(
         "epp_script",
-        PLUGIN_URL."//Employee_Portal/assets/js/script.js",
+        PLUGIN_URL."/Employee_Portal/assets/js/script.js",
         '',
-        PLUGIN_VERSION, // plugin version number
+        PLUGIN_VERSION,
+        false
+    );
+
+    wp_enqueue_style(
+        "job_style",
+        PLUGIN_URL."/Employee_Portal/public/style.css",
+        '',
+        PLUGIN_VERSION,
         false
     );
 
     wp_localize_script("epp_script","ajaxurl",admin_url("admin-ajax.php"));
 }
 
-add_action("init","employee_portal_assets");
+add_action("init","employee_portal_admin_assets");
+// add_action( 'wp_enqueue_scripts', 'employee_portal_admin_assets' );
+// add_action( 'admin_enqueue_scripts', 'employee_portal_admin_assets' );
 
-if(isset($_REQUEST['action'])) {    //it checks the action param is set or not
-    switch($_REQUEST['action']) {   //if set pass to switch methods to match case
-        case "employee_portal_library" : add_action("admin_init","add_employee_portal_library");    //match case
-        function add_employee_portal_library() {    //function attached with action hook
-            global $wpdb;
-            include_once PLUGIN_DIR_PATH."/library/employee_portal_lib.php";    //ajax handler file with /library folder
-        }
-    }
-}
-
-// custom ajax_req from js file
-add_action("wp_ajax_employee_portal_ajax_req","employee_portal_ajax_req_fn");
-function employee_portal_ajax_req_fn() {
-    print_r($_REQUEST);
-
+function employee_portal_ajax_req_fn()
+{
     global $wpdb;
+    $client_id = $_POST["client_id"];
+    $client_secret = $_POST["client_secret"];
     $wpdb->query(
       $wpdb->prepare(
-        "INSERT into wp_employee_portal (username,password,signature) values('%s','%s','%s')",$_REQUEST["username"],$_REQUEST["pass"],$_REQUEST["sign"]
+        "INSERT into wp_client_credentials (client_id,client_secret) values('%s','%s')",$client_id,$client_secret
       )
     );
     
-    wp_die();
-}
+    // wp_die();
 
-function employee_portal_tables() {
-    
-    global $wpdb;
-    require_once(ABSPATH.'wp-admin/includes/upgrade.php');
-
-    if(count($wpdb->get_var('SHOW TABLES LIKE "wp_employee_portal" ')) == 0) {
-
-        $sql_query_to_create_table = "CREATE TABLE `wp_employee_portal` (
-                                     `id` int(11) NOT NULL AUTO_INCREMENT,
-                                     `username` varchar(150) DEFAULT NULL,
-                                     `password` varchar(150) DEFAULT NULL,
-                                     `signature` varchar(150) DEFAULT NULL,
-                                     `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                                      PRIMARY KEY (`id`)
-                                    ) ENGINE=InnoDB DEFAULT CHARSET=latin1"; // sql query to create table
-
-        dbDelta($sql_query_to_create_table);
-
-        $page = array();
-        $page['post_title'] = "Jobs";
-        $page['post_content'] = "Customise the page";
-        $page['post_status'] = "publish";
-        $page['post_slug'] = "Jobs";
-        $page['post_type'] = "page";
-
-        $post_id = wp_insert_post($page);
-        add_option("employee_portal_page_id",$post_id);
-
+    if($wpdb > 0) {
+        $return = array(
+            'message' => 'You have successfully saved your credentials',
+        );
+        wp_send_json_success( $return );
     }
 }
 
-register_activation_hook(__FILE__,'employee_portal_tables');
+add_action("wp_ajax_employee_portal_ajax_req","employee_portal_ajax_req_fn");
 
-function deactivate_table() {
-
-    global $wpdb;
-    $wpdb->query("DROP table IF EXISTS wp_employee_portal");
-
-    $the_post_id = get_option("employee_portal_page_id");
-
-    if(!empty($the_post_id)) {
-        wp_delete_post($the_post_id,true);
-    }
-
+function activate_employee_portal()
+{
+    include PLUGIN_DIR_PATH."/on-activation.php";
 }
 
-register_deactivation_hook(__FILE__,'deactivate_table');
-register_uninstall_hook(__FILE__,'deactivate_table');
+register_activation_hook(__FILE__,'activate_employee_portal');
 
+function send_api_request()
+{
+    include PLUGIN_DIR_PATH."/api-interaction.php";
+}
+
+register_activation_hook(__FILE__,'send_api_request',13);
+
+function jobs_list_shortcode_fn()
+{
+    include PLUGIN_DIR_PATH."/views/career.php";
+}
+
+add_shortcode("jobs-list","jobs_list_shortcode_fn");
+
+function job_detail_shortcode_fn()
+{
+    include PLUGIN_DIR_PATH."/views/job.php";
+}
+
+add_shortcode("job-detail","job_detail_shortcode_fn");
+
+function remove_post()
+{
+    $the_post_id1 = get_option("career_page_id");
+
+    if(!empty($the_post_id1)) {
+        wp_delete_post($the_post_id1,true);
+    }
+
+    $the_post_id2 = get_option("job_page_id");
+
+    if(!empty($the_post_id2)) {
+        wp_delete_post($the_post_id2,true);
+    }
+}
+
+function remove_table()
+{
+    global $wpdb;
+    $wpdb->query("DROP table IF EXISTS wp_client_credentials");
+    $wpdb->query("DROP table IF EXISTS wp_career");
+}
+
+register_deactivation_hook(__FILE__,'remove_post');
+register_deactivation_hook(__FILE__,'remove_table');
+register_uninstall_hook(__FILE__,'remove_table');
